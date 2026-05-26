@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ElectroTools · Ley de Coulomb, Campo E, Distribución, Flujo y Gauss</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0B1120; --surface: #1E293B; --text: #F1F5F9; --text-light: #94A3B8;
+            --primary: #38BDF8; --primary-dark: #0284C7; --border: #334155;
+            --shadow: 0 8px 20px rgba(0,0,0,0.3); --formula-bg: #0F172A;
+        }
+        body.light {
+            --bg: #F8FAFC; --surface: #FFFFFF; --text: #0F172A; --text-light: #475569;
+            --primary: #0EA5E9; --primary-dark: #0284C7; --border: #E2E8F0;
+            --shadow: 0 8px 20px rgba(0,0,0,0.05); --formula-bg: #F1F5F9;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; transition: 0.2s; padding: 24px 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid var(--primary); }
+        .title h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), #A855F7); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .title p { font-size: 0.85rem; color: var(--text-light); }
+        .theme-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 8px 18px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .theme-btn:hover { background: var(--primary); color: white; }
+        .constants { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 12px 24px; margin-bottom: 36px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+        .constants span { color: var(--primary); font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 28px; margin-bottom: 40px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 22px; box-shadow: var(--shadow); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-4px); }
+        .card h2 { font-size: 1.4rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--primary); padding-left: 12px; }
+        .card h2 i { color: var(--primary); }
+        .formula { background: var(--formula-bg); border-radius: 16px; padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; text-align: center; margin-bottom: 20px; border: 1px dashed var(--primary); }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 500; margin-bottom: 5px; }
+        .input-group input, .input-group select { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+        button { background: var(--primary); border: none; color: white; font-weight: 600; padding: 8px; border-radius: 40px; width: 100%; cursor: pointer; transition: 0.2s; margin-top: 8px; }
+        button:hover { background: var(--primary-dark); transform: scale(0.98); }
+        .pdf-btn { background: #10B981; margin-top: 12px; }
+        .pdf-btn:hover { background: #059669; }
+        .result { background: var(--bg); border-radius: 20px; padding: 12px; margin-top: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center; border: 1px solid var(--border); }
+        .note { font-size: 0.7rem; text-align: center; margin-top: 12px; color: var(--text-light); }
+        footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.75rem; }
+        @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="title"><h1><i class="fas fa-bolt"></i> ElectroTools</h1><p>Coulomb · Campo E · Distribución · Flujo · Gauss</p></div>
+        <button class="theme-btn" id="themeToggle"><i class="fas fa-moon"></i> Modo oscuro</button>
+    </div>
+    <div class="constants"><span>ε₀ = 8.854187817×10⁻¹² C²/N·m²</span><span>k = 8.9876×10⁹ N·m²/C²</span></div>
+    <div class="grid">
+        <div class="card" id="card-coulomb"><h2><i class="fas fa-magnet"></i> Ley de Coulomb</h2><div class="formula">F = k · |q₁·q₂| / r²</div>
+            <div class="input-group"><label>Calcular:</label><select id="coulombTarget"><option value="F">Fuerza (F)</option><option value="q1">Carga q₁</option><option value="q2">Carga q₂</option><option value="r">Distancia r</option></select></div>
+            <div id="coulombInputs"></div><button id="coulombBtn">Calcular</button><div class="result" id="coulombResult">---</div>
+            <button class="pdf-btn" data-module="coulomb">📄 Exportar PDF (procedimiento completo)</button></div>
+        <div class="card" id="card-e"><h2><i class="fas fa-circle-dot"></i> Campo Eléctrico</h2><div class="formula">E = k · |q| / r²</div>
+            <div class="input-group"><label>Calcular:</label><select id="eTarget"><option value="E">Campo E (N/C)</option><option value="q">Carga q (C)</option><option value="r">Distancia r (m)</option></select></div>
+            <div id="eInputs"></div><button id="eBtn">Calcular</button><div class="result" id="eResult">---</div>
+            <button class="pdf-btn" data-module="e">📄 Exportar PDF (procedimiento completo)</button></div>
+        <div class="card" id="card-dist"><h2><i class="fas fa-chart-pie"></i> Distribución de carga</h2><div class="formula">λ = Q/L &nbsp; σ = Q/A &nbsp; ρ = Q/V</div>
+            <div class="input-group"><label>Tipo</label><select id="distType"><option value="lineal">Lineal (λ = Q/L)</option><option value="superficial">Superficial (σ = Q/A)</option><option value="volumetrica">Volumétrica (ρ = Q/V)</option></select></div>
+            <div id="distInputs"></div><button id="distBtn">Calcular</button><div class="result" id="distResult">---</div>
+            <button class="pdf-btn" data-module="dist">📄 Exportar PDF (procedimiento completo)</button></div>
+        <div class="card" id="card-flux"><h2><i class="fas fa-draw-polygon"></i> Flujo Eléctrico</h2><div class="formula">Φ = E · A · cosθ</div>
+            <div class="input-group"><label>Calcular:</label><select id="fluxTarget"><option value="Phi">Flujo Φ (N·m²/C)</option><option value="E">Campo E (N/C)</option><option value="A">Área A (m²)</option><option value="theta">Ángulo θ (°)</option></select></div>
+            <div id="fluxInputs"></div><button id="fluxBtn">Calcular</button><div class="result" id="fluxResult">---</div>
+            <button class="pdf-btn" data-module="flux">📄 Exportar PDF (procedimiento completo)</button></div>
+        <div class="card" id="card-gauss"><h2><i class="fas fa-shield-haltered"></i> Ley de Gauss</h2><div class="formula">∮ E·dA = Q<sub>enc</sub>/ε₀</div>
+            <div class="input-group"><label>Simetría</label><select id="gaussSym"><option value="sphere">Esférica</option><option value="plane">Plano infinito</option><option value="cylinder">Cilindro infinito</option></select></div>
+            <div id="gaussInputs"></div>
+            <div class="input-group"><label>Calcular:</label><select id="gaussTarget"><option value="E">Campo eléctrico E</option><option value="Q">Carga/densidad</option></select></div>
+            <button id="gaussBtn">Aplicar Ley de Gauss</button><div class="result" id="gaussResult">---</div>
+            <button class="pdf-btn" data-module="gauss">📄 Exportar PDF (procedimiento completo)</button></div>
+    </div>
+    <footer><i class="fas fa-microchip"></i> k = 8.9876×10⁹ N·m²/C² · ε₀ = 8.854187817×10⁻¹² F/m</footer>
+</div>
+
+<script>
+    // Constantes
+    const K = 8.987551787e9;
+    const EPS0 = 8.854187817e-12;
+
+    // Función para mostrar números de forma legible (sin notación científica extraña)
+    function formatoLegible(x) {
+        if (isNaN(x)) return "???";
+        // Si es cero
+        if (x === 0) return "0";
+        // Para números muy pequeños o grandes, usar notación científica pero con "x10^"
+        let absX = Math.abs(x);
+        if (absX < 1e-8 || absX > 1e8) {
+            let exp = Math.floor(Math.log10(absX));
+            let mantisa = x / Math.pow(10, exp);
+            return mantisa.toFixed(6) + " × 10^" + exp;
+        }
+        // Para números normales, mostrar con hasta 8 decimales sin exponente
+        return parseFloat(x.toFixed(8)).toString();
+    }
+
+    // ========== LEY DE COULOMB ==========
+    const coulombTarget = document.getElementById('coulombTarget');
+    const coulombInputsDiv = document.getElementById('coulombInputs');
+    function updateCoulombUI() {
+        const t = coulombTarget.value;
+        let html = '';
+        if (t === 'F') html = `<div class="input-group"><label>q₁ (C)</label><input type="number" id="c_q1" value="1e-6" step="any"></div><div class="input-group"><label>q₂ (C)</label><input type="number" id="c_q2" value="2e-6" step="any"></div><div class="input-group"><label>r (m)</label><input type="number" id="c_r" value="0.05" step="any"></div>`;
+        else if (t === 'q1') html = `<div class="input-group"><label>F (N)</label><input type="number" id="c_F" value="7.19" step="any"></div><div class="input-group"><label>q₂ (C)</label><input type="number" id="c_q2" value="2e-6" step="any"></div><div class="input-group"><label>r (m)</label><input type="number" id="c_r" value="0.05" step="any"></div>`;
+        else if (t === 'q2') html = `<div class="input-group"><label>F (N)</label><input type="number" id="c_F" value="7.19" step="any"></div><div class="input-group"><label>q₁ (C)</label><input type="number" id="c_q1" value="1e-6" step="any"></div><div class="input-group"><label>r (m)</label><input type="number" id="c_r" value="0.05" step="any"></div>`;
+        else if (t === 'r') html = `<div class="input-group"><label>F (N)</label><input type="number" id="c_F" value="7.19" step="any"></div><div class="input-group"><label>q₁ (C)</label><input type="number" id="c_q1" value="1e-6" step="any"></div><div class="input-group"><label>q₂ (C)</label><input type="number" id="c_q2" value="2e-6" step="any"></div>`;
+        coulombInputsDiv.innerHTML = html;
+    }
+    function getCoulombData() { const t = coulombTarget.value; let d = { target: t }; if (t === 'F') { d.q1 = parseFloat(document.getElementById('c_q1')?.value); d.q2 = parseFloat(document.getElementById('c_q2')?.value); d.r = parseFloat(document.getElementById('c_r')?.value); } else if (t === 'q1') { d.F = parseFloat(document.getElementById('c_F')?.value); d.q2 = parseFloat(document.getElementById('c_q2')?.value); d.r = parseFloat(document.getElementById('c_r')?.value); } else if (t === 'q2') { d.F = parseFloat(document.getElementById('c_F')?.value); d.q1 = parseFloat(document.getElementById('c_q1')?.value); d.r = parseFloat(document.getElementById('c_r')?.value); } else if (t === 'r') { d.F = parseFloat(document.getElementById('c_F')?.value); d.q1 = parseFloat(document.getElementById('c_q1')?.value); d.q2 = parseFloat(document.getElementById('c_q2')?.value); } d.result = document.getElementById('coulombResult').innerText; return d; }
+    function computeCoulomb() { const t = coulombTarget.value; try { if (t === 'F') { let q1 = parseFloat(document.getElementById('c_q1')?.value), q2 = parseFloat(document.getElementById('c_q2')?.value), r = parseFloat(document.getElementById('c_r')?.value); if (isNaN(q1)||isNaN(q2)||isNaN(r)||r===0) throw new Error(); let F = K * Math.abs(q1) * Math.abs(q2) / (r * r); document.getElementById('coulombResult').innerHTML = `F = ${formatoLegible(F)} N`; } else if (t === 'q1') { let F = parseFloat(document.getElementById('c_F')?.value), q2 = parseFloat(document.getElementById('c_q2')?.value), r = parseFloat(document.getElementById('c_r')?.value); if (isNaN(F)||isNaN(q2)||isNaN(r)||r===0||q2===0) throw new Error(); let q1 = (F * r * r) / (K * Math.abs(q2)); document.getElementById('coulombResult').innerHTML = `|q₁| = ${formatoLegible(q1)} C`; } else if (t === 'q2') { let F = parseFloat(document.getElementById('c_F')?.value), q1 = parseFloat(document.getElementById('c_q1')?.value), r = parseFloat(document.getElementById('c_r')?.value); if (isNaN(F)||isNaN(q1)||isNaN(r)||r===0||q1===0) throw new Error(); let q2 = (F * r * r) / (K * Math.abs(q1)); document.getElementById('coulombResult').innerHTML = `|q₂| = ${formatoLegible(q2)} C`; } else if (t === 'r') { let F = parseFloat(document.getElementById('c_F')?.value), q1 = parseFloat(document.getElementById('c_q1')?.value), q2 = parseFloat(document.getElementById('c_q2')?.value); if (isNaN(F)||isNaN(q1)||isNaN(q2)||F===0) throw new Error(); let r = Math.sqrt(K * Math.abs(q1) * Math.abs(q2) / F); document.getElementById('coulombResult').innerHTML = `r = ${formatoLegible(r)} m`; } } catch(e) { document.getElementById('coulombResult').innerHTML = "❌ Datos inválidos"; } }
+    coulombTarget.addEventListener('change', () => { updateCoulombUI(); computeCoulomb(); });
+    document.getElementById('coulombBtn').addEventListener('click', computeCoulomb);
+    updateCoulombUI(); computeCoulomb();
+
+    // ========== CAMPO ELÉCTRICO ==========
+    const eTarget = document.getElementById('eTarget'); const eInputsDiv = document.getElementById('eInputs');
+    function updateEUI() { const t = eTarget.value; let html = ''; if (t === 'E') html = `<div class="input-group"><label>q (C)</label><input type="number" id="e_q" value="1e-6" step="any"></div><div class="input-group"><label>r (m)</label><input type="number" id="e_r" value="0.1" step="any"></div>`; else if (t === 'q') html = `<div class="input-group"><label>E (N/C)</label><input type="number" id="e_E" value="8.99e5" step="any"></div><div class="input-group"><label>r (m)</label><input type="number" id="e_r" value="0.1" step="any"></div>`; else if (t === 'r') html = `<div class="input-group"><label>E (N/C)</label><input type="number" id="e_E" value="8.99e5" step="any"></div><div class="input-group"><label>q (C)</label><input type="number" id="e_q" value="1e-6" step="any"></div>`; eInputsDiv.innerHTML = html; }
+    function getEData() { const t = eTarget.value; let d = { target: t }; if (t === 'E') { d.q = parseFloat(document.getElementById('e_q')?.value); d.r = parseFloat(document.getElementById('e_r')?.value); } else if (t === 'q') { d.E = parseFloat(document.getElementById('e_E')?.value); d.r = parseFloat(document.getElementById('e_r')?.value); } else if (t === 'r') { d.E = parseFloat(document.getElementById('e_E')?.value); d.q = parseFloat(document.getElementById('e_q')?.value); } d.result = document.getElementById('eResult').innerText; return d; }
+    function computeE() { const t = eTarget.value; try { if (t === 'E') { let q = parseFloat(document.getElementById('e_q')?.value), r = parseFloat(document.getElementById('e_r')?.value); if (isNaN(q)||isNaN(r)||r===0) throw new Error(); let E = K * Math.abs(q) / (r * r); document.getElementById('eResult').innerHTML = `E = ${formatoLegible(E)} N/C`; } else if (t === 'q') { let E = parseFloat(document.getElementById('e_E')?.value), r = parseFloat(document.getElementById('e_r')?.value); if (isNaN(E)||isNaN(r)||r===0) throw new Error(); let q = (E * r * r) / K; document.getElementById('eResult').innerHTML = `|q| = ${formatoLegible(q)} C`; } else if (t === 'r') { let E = parseFloat(document.getElementById('e_E')?.value), q = parseFloat(document.getElementById('e_q')?.value); if (isNaN(E)||isNaN(q)||E===0) throw new Error(); let r = Math.sqrt(K * Math.abs(q) / E); document.getElementById('eResult').innerHTML = `r = ${formatoLegible(r)} m`; } } catch(e) { document.getElementById('eResult').innerHTML = "❌ Datos inválidos"; } }
+    eTarget.addEventListener('change', () => { updateEUI(); computeE(); });
+    document.getElementById('eBtn').addEventListener('click', computeE);
+    updateEUI(); computeE();
+
+    // ========== DISTRIBUCIÓN ==========
+    const distType = document.getElementById('distType'); const distInputsDiv = document.getElementById('distInputs');
+    function updateDistUI() { const type = distType.value; let html = ''; if (type === 'lineal') html = `<div class="input-group"><label>Q (C)</label><input type="number" id="dist_Q" value="2e-6" step="any"></div><div class="input-group"><label>L (m)</label><input type="number" id="dist_L" value="0.5" step="any"></div><div class="input-group"><label>Calcular</label><select id="distCalc"><option value="lambda">λ (C/m)</option><option value="Q">Q (C)</option><option value="L">L (m)</option></select></div>`; else if (type === 'superficial') html = `<div class="input-group"><label>Q (C)</label><input type="number" id="dist_Q" value="5e-6" step="any"></div><div class="input-group"><label>A (m²)</label><input type="number" id="dist_A" value="0.2" step="any"></div><div class="input-group"><label>Calcular</label><select id="distCalc"><option value="sigma">σ (C/m²)</option><option value="Q">Q (C)</option><option value="A">A (m²)</option></select></div>`; else if (type === 'volumetrica') html = `<div class="input-group"><label>Q (C)</label><input type="number" id="dist_Q" value="1e-5" step="any"></div><div class="input-group"><label>V (m³)</label><input type="number" id="dist_V" value="0.01" step="any"></div><div class="input-group"><label>Calcular</label><select id="distCalc"><option value="rho">ρ (C/m³)</option><option value="Q">Q (C)</option><option value="V">V (m³)</option></select></div>`; distInputsDiv.innerHTML = html; }
+    function getDistData() { const type = distType.value; const calc = document.getElementById('distCalc')?.value; let d = { type, calc }; if (type === 'lineal') { d.Q = parseFloat(document.getElementById('dist_Q')?.value); d.L = parseFloat(document.getElementById('dist_L')?.value); if (calc === 'lambda') d.lambda = d.Q / d.L; else if (calc === 'Q') d.lambda = parseFloat(document.getElementById('dist_lambda')?.value); else if (calc === 'L') d.lambda = parseFloat(document.getElementById('dist_lambda')?.value); } else if (type === 'superficial') { d.Q = parseFloat(document.getElementById('dist_Q')?.value); d.A = parseFloat(document.getElementById('dist_A')?.value); if (calc === 'sigma') d.sigma = d.Q / d.A; else if (calc === 'Q') d.sigma = parseFloat(document.getElementById('dist_sigma')?.value); else if (calc === 'A') d.sigma = parseFloat(document.getElementById('dist_sigma')?.value); } else if (type === 'volumetrica') { d.Q = parseFloat(document.getElementById('dist_Q')?.value); d.V = parseFloat(document.getElementById('dist_V')?.value); if (calc === 'rho') d.rho = d.Q / d.V; else if (calc === 'Q') d.rho = parseFloat(document.getElementById('dist_rho')?.value); else if (calc === 'V') d.rho = parseFloat(document.getElementById('dist_rho')?.value); } d.result = document.getElementById('distResult').innerText; return d; }
+    function computeDist() { const type = distType.value; const calc = document.getElementById('distCalc')?.value; try { if (type === 'lineal') { let Q = parseFloat(document.getElementById('dist_Q')?.value), L = parseFloat(document.getElementById('dist_L')?.value); if (calc === 'lambda') { if (isNaN(Q)||isNaN(L)||L===0) throw new Error(); let lambda = Q/L; document.getElementById('distResult').innerHTML = `λ = ${formatoLegible(lambda)} C/m`; } else if (calc === 'Q') { let lambda = parseFloat(document.getElementById('dist_lambda')?.value); if (isNaN(lambda)||isNaN(L)||L===0) throw new Error(); let Qcalc = lambda * L; document.getElementById('distResult').innerHTML = `Q = ${formatoLegible(Qcalc)} C`; } else if (calc === 'L') { let lambda = parseFloat(document.getElementById('dist_lambda')?.value); if (isNaN(lambda)||isNaN(Q)||lambda===0) throw new Error(); let Lcalc = Q / lambda; document.getElementById('distResult').innerHTML = `L = ${formatoLegible(Lcalc)} m`; } } else if (type === 'superficial') { let Q = parseFloat(document.getElementById('dist_Q')?.value), A = parseFloat(document.getElementById('dist_A')?.value); if (calc === 'sigma') { if (isNaN(Q)||isNaN(A)||A===0) throw new Error(); let sigma = Q/A; document.getElementById('distResult').innerHTML = `σ = ${formatoLegible(sigma)} C/m²`; } else if (calc === 'Q') { let sigma = parseFloat(document.getElementById('dist_sigma')?.value); if (isNaN(sigma)||isNaN(A)||A===0) throw new Error(); let Qcalc = sigma * A; document.getElementById('distResult').innerHTML = `Q = ${formatoLegible(Qcalc)} C`; } else if (calc === 'A') { let sigma = parseFloat(document.getElementById('dist_sigma')?.value); if (isNaN(sigma)||isNaN(Q)||sigma===0) throw new Error(); let Acalc = Q / sigma; document.getElementById('distResult').innerHTML = `A = ${formatoLegible(Acalc)} m²`; } } else if (type === 'volumetrica') { let Q = parseFloat(document.getElementById('dist_Q')?.value), V = parseFloat(document.getElementById('dist_V')?.value); if (calc === 'rho') { if (isNaN(Q)||isNaN(V)||V===0) throw new Error(); let rho = Q/V; document.getElementById('distResult').innerHTML = `ρ = ${formatoLegible(rho)} C/m³`; } else if (calc === 'Q') { let rho = parseFloat(document.getElementById('dist_rho')?.value); if (isNaN(rho)||isNaN(V)||V===0) throw new Error(); let Qcalc = rho * V; document.getElementById('distResult').innerHTML = `Q = ${formatoLegible(Qcalc)} C`; } else if (calc === 'V') { let rho = parseFloat(document.getElementById('dist_rho')?.value); if (isNaN(rho)||isNaN(Q)||rho===0) throw new Error(); let Vcalc = Q / rho; document.getElementById('distResult').innerHTML = `V = ${formatoLegible(Vcalc)} m³`; } } } catch(e) { document.getElementById('distResult').innerHTML = "❌ Datos inválidos"; } }
+    distType.addEventListener('change', () => { updateDistUI(); computeDist(); });
+    document.getElementById('distBtn').addEventListener('click', computeDist);
+    updateDistUI(); computeDist();
+
+    // ========== FLUJO ==========
+    const fluxTarget = document.getElementById('fluxTarget'); const fluxInputsDiv = document.getElementById('fluxInputs');
+    function updateFluxUI() { const t = fluxTarget.value; let html = ''; if (t === 'Phi') html = `<div class="input-group"><label>E (N/C)</label><input type="number" id="f_E" value="5000" step="any"></div><div class="input-group"><label>A (m²)</label><input type="number" id="f_A" value="0.2" step="any"></div><div class="input-group"><label>θ (°)</label><input type="number" id="f_theta" value="0" step="any"></div>`; else if (t === 'E') html = `<div class="input-group"><label>Φ (N·m²/C)</label><input type="number" id="f_Phi" value="1000" step="any"></div><div class="input-group"><label>A (m²)</label><input type="number" id="f_A" value="0.2" step="any"></div><div class="input-group"><label>θ (°)</label><input type="number" id="f_theta" value="0" step="any"></div>`; else if (t === 'A') html = `<div class="input-group"><label>Φ (N·m²/C)</label><input type="number" id="f_Phi" value="1000" step="any"></div><div class="input-group"><label>E (N/C)</label><input type="number" id="f_E" value="5000" step="any"></div><div class="input-group"><label>θ (°)</label><input type="number" id="f_theta" value="0" step="any"></div>`; else if (t === 'theta') html = `<div class="input-group"><label>Φ (N·m²/C)</label><input type="number" id="f_Phi" value="1000" step="any"></div><div class="input-group"><label>E (N/C)</label><input type="number" id="f_E" value="5000" step="any"></div><div class="input-group"><label>A (m²)</label><input type="number" id="f_A" value="0.2" step="any"></div>`; fluxInputsDiv.innerHTML = html; }
+    function getFluxData() { const t = fluxTarget.value; let d = { target: t }; if (t === 'Phi') { d.E = parseFloat(document.getElementById('f_E')?.value); d.A = parseFloat(document.getElementById('f_A')?.value); d.theta = parseFloat(document.getElementById('f_theta')?.value); } else if (t === 'E') { d.Phi = parseFloat(document.getElementById('f_Phi')?.value); d.A = parseFloat(document.getElementById('f_A')?.value); d.theta = parseFloat(document.getElementById('f_theta')?.value); } else if (t === 'A') { d.Phi = parseFloat(document.getElementById('f_Phi')?.value); d.E = parseFloat(document.getElementById('f_E')?.value); d.theta = parseFloat(document.getElementById('f_theta')?.value); } else if (t === 'theta') { d.Phi = parseFloat(document.getElementById('f_Phi')?.value); d.E = parseFloat(document.getElementById('f_E')?.value); d.A = parseFloat(document.getElementById('f_A')?.value); } d.result = document.getElementById('fluxResult').innerText; return d; }
+    function computeFlux() { const t = fluxTarget.value; try { if (t === 'Phi') { let E = parseFloat(document.getElementById('f_E')?.value), A = parseFloat(document.getElementById('f_A')?.value), theta = parseFloat(document.getElementById('f_theta')?.value); if (isNaN(E)||isNaN(A)||isNaN(theta)) throw new Error(); let phi = E * A * Math.cos(theta * Math.PI/180); document.getElementById('fluxResult').innerHTML = `Φ = ${formatoLegible(phi)} N·m²/C`; } else if (t === 'E') { let phi = parseFloat(document.getElementById('f_Phi')?.value), A = parseFloat(document.getElementById('f_A')?.value), theta = parseFloat(document.getElementById('f_theta')?.value); if (isNaN(phi)||isNaN(A)||isNaN(theta)||A===0) throw new Error(); let E = phi / (A * Math.cos(theta * Math.PI/180)); document.getElementById('fluxResult').innerHTML = `E = ${formatoLegible(E)} N/C`; } else if (t === 'A') { let phi = parseFloat(document.getElementById('f_Phi')?.value), E = parseFloat(document.getElementById('f_E')?.value), theta = parseFloat(document.getElementById('f_theta')?.value); if (isNaN(phi)||isNaN(E)||isNaN(theta)||E===0) throw new Error(); let A = phi / (E * Math.cos(theta * Math.PI/180)); document.getElementById('fluxResult').innerHTML = `A = ${formatoLegible(A)} m²`; } else if (t === 'theta') { let phi = parseFloat(document.getElementById('f_Phi')?.value), E = parseFloat(document.getElementById('f_E')?.value), A = parseFloat(document.getElementById('f_A')?.value); if (isNaN(phi)||isNaN(E)||isNaN(A)||E===0||A===0) throw new Error(); let cosTheta = phi / (E * A); let thetaRad = Math.acos(Math.min(1, Math.max(-1, cosTheta))); let thetaDeg = thetaRad * 180/Math.PI; document.getElementById('fluxResult').innerHTML = `θ = ${formatoLegible(thetaDeg)}°`; } } catch(e) { document.getElementById('fluxResult').innerHTML = "❌ Datos inválidos"; } }
+    fluxTarget.addEventListener('change', () => { updateFluxUI(); computeFlux(); });
+    document.getElementById('fluxBtn').addEventListener('click', computeFlux);
+    updateFluxUI(); computeFlux();
+
+    // ========== GAUSS ==========
+    const gaussSym = document.getElementById('gaussSym'); const gaussInputsDiv = document.getElementById('gaussInputs'); const gaussTargetSel = document.getElementById('gaussTarget');
+    function updateGaussUI() { const sym = gaussSym.value; let html = ''; if (sym === 'sphere') html = `<div class="input-group"><label>r (m)</label><input type="number" id="g_r" value="0.1" step="any"></div><div class="input-group"><label>Valor (Q_enc en C  o  E en N/C)</label><input type="number" id="g_val" value="2e-6" step="any"></div>`; else if (sym === 'plane') html = `<div class="input-group"><label>Valor (σ en C/m²  o  E en N/C)</label><input type="number" id="g_val" value="8.85e-6" step="any"></div>`; else if (sym === 'cylinder') html = `<div class="input-group"><label>r (m)</label><input type="number" id="g_r" value="0.05" step="any"></div><div class="input-group"><label>Valor (λ en C/m  o  E en N/C)</label><input type="number" id="g_val" value="1e-6" step="any"></div>`; gaussInputsDiv.innerHTML = html; }
+    function getGaussData() { const sym = gaussSym.value; const target = gaussTargetSel.value; let d = { sym, target }; if (sym === 'sphere') { d.r = parseFloat(document.getElementById('g_r')?.value); d.val = parseFloat(document.getElementById('g_val')?.value); } else if (sym === 'plane') { d.val = parseFloat(document.getElementById('g_val')?.value); } else if (sym === 'cylinder') { d.r = parseFloat(document.getElementById('g_r')?.value); d.val = parseFloat(document.getElementById('g_val')?.value); } d.result = document.getElementById('gaussResult').innerText; return d; }
+    function computeGauss() { const sym = gaussSym.value; const target = gaussTargetSel.value; try { if (sym === 'sphere') { let r = parseFloat(document.getElementById('g_r')?.value), val = parseFloat(document.getElementById('g_val')?.value); if (isNaN(r)||r<=0||isNaN(val)) throw new Error(); if (target === 'E') { let Q = val, E = (1/(4*Math.PI*EPS0)) * Math.abs(Q) / (r*r); document.getElementById('gaussResult').innerHTML = `E = ${formatoLegible(E)} N/C (Q_enc = ${formatoLegible(Q)} C)`; } else { let E = val, Q = 4 * Math.PI * EPS0 * r * r * E; document.getElementById('gaussResult').innerHTML = `Q_enc = ${formatoLegible(Q)} C (E = ${formatoLegible(E)} N/C)`; } } else if (sym === 'plane') { let val = parseFloat(document.getElementById('g_val')?.value); if (isNaN(val)) throw new Error(); if (target === 'E') { let sigma = val, E = sigma / (2 * EPS0); document.getElementById('gaussResult').innerHTML = `E = ${formatoLegible(E)} N/C (σ = ${formatoLegible(sigma)} C/m²)`; } else { let E = val, sigma = 2 * EPS0 * E; document.getElementById('gaussResult').innerHTML = `σ = ${formatoLegible(sigma)} C/m² (E = ${formatoLegible(E)} N/C)`; } } else if (sym === 'cylinder') { let r = parseFloat(document.getElementById('g_r')?.value), val = parseFloat(document.getElementById('g_val')?.value); if (isNaN(r)||r<=0||isNaN(val)) throw new Error(); if (target === 'E') { let lambda = val, E = lambda / (2 * Math.PI * EPS0 * r); document.getElementById('gaussResult').innerHTML = `E = ${formatoLegible(E)} N/C (λ = ${formatoLegible(lambda)} C/m)`; } else { let E = val, lambda = 2 * Math.PI * EPS0 * r * E; document.getElementById('gaussResult').innerHTML = `λ = ${formatoLegible(lambda)} C/m (E = ${formatoLegible(E)} N/C)`; } } } catch(e) { document.getElementById('gaussResult').innerHTML = "❌ Datos inválidos"; } }
+    gaussSym.addEventListener('change', () => { updateGaussUI(); computeGauss(); });
+    gaussTargetSel.addEventListener('change', computeGauss);
+    document.getElementById('gaussBtn').addEventListener('click', computeGauss);
+    updateGaussUI(); computeGauss();
+
+    // ========== GENERACIÓN DE PDF CON FORMATO LEGIBLE ==========
+    async function generarPDF(modulo) {
+        const { jsPDF } = window.jspdf;
+        let titulo = "", formula = "", procedimiento = "", valores = "", resultado = "";
+
+        // Función para limpiar y mostrar números sin signos raros
+        function fmt(x) { return formatoLegible(x); }
+
+        if (modulo === 'coulomb') {
+            const d = getCoulombData();
+            titulo = "Ley de Coulomb";
+            formula = "F = k * |q1 * q2| / r^2, con k = 8.9876 × 10^9 N·m^2/C^2";
+            if (d.target === 'F') {
+                valores = `q1 = ${fmt(d.q1)} C, q2 = ${fmt(d.q2)} C, r = ${fmt(d.r)} m`;
+                let num = Math.abs(d.q1 * d.q2);
+                let r2 = d.r * d.r;
+                let k_val = K;
+                procedimiento = `1. Datos del problema:\n   q1 = ${fmt(d.q1)} C\n   q2 = ${fmt(d.q2)} C\n   distancia r = ${fmt(d.r)} m\n\n`;
+                procedimiento += `2. Se aplica la Ley de Coulomb: F = k * |q1 * q2| / r^2\n\n`;
+                procedimiento += `3. Se calcula el producto |q1 * q2| = ${fmt(num)} C^2\n\n`;
+                procedimiento += `4. Se calcula r^2 = (${fmt(d.r)})^2 = ${fmt(r2)} m^2\n\n`;
+                procedimiento += `5. Se divide |q1*q2| / r^2 = ${fmt(num)} / ${fmt(r2)} = ${fmt(num/r2)} C^2/m^2\n\n`;
+                procedimiento += `6. Se multiplica por k = ${fmt(k_val)}:\n   F = ${fmt(k_val)} * ${fmt(num/r2)} = ${fmt(K * num / r2)} N`;
+                resultado = `F = ${fmt(K * num / r2)} N`;
+            } else if (d.target === 'q1') {
+                valores = `F = ${fmt(d.F)} N, q2 = ${fmt(d.q2)} C, r = ${fmt(d.r)} m`;
+                let r2 = d.r * d.r;
+                let k_val = K;
+                procedimiento = `1. Datos:\n   F = ${fmt(d.F)} N\n   q2 = ${fmt(d.q2)} C\n   r = ${fmt(d.r)} m\n\n`;
+                procedimiento += `2. Se despeja |q1| de la fórmula: |q1| = (F * r^2) / (k * |q2|)\n\n`;
+                procedimiento += `3. Se calcula r^2 = (${fmt(d.r)})^2 = ${fmt(r2)} m^2\n\n`;
+                procedimiento += `4. Se calcula F * r^2 = ${fmt(d.F)} * ${fmt(r2)} = ${fmt(d.F * r2)} N·m^2\n\n`;
+                procedimiento += `5. Se calcula k * |q2| = ${fmt(k_val)} * ${fmt(Math.abs(d.q2))} = ${fmt(k_val * Math.abs(d.q2))} N·m^2/C^2\n\n`;
+                procedimiento += `6. Finalmente |q1| = ${fmt(d.F * r2)} / ${fmt(k_val * Math.abs(d.q2))} = ${fmt((d.F * r2) / (k_val * Math.abs(d.q2)))} C`;
+                resultado = `|q1| = ${fmt((d.F * r2) / (K * Math.abs(d.q2)))} C`;
+            } else if (d.target === 'q2') {
+                valores = `F = ${fmt(d.F)} N, q1 = ${fmt(d.q1)} C, r = ${fmt(d.r)} m`;
+                let r2 = d.r * d.r;
+                procedimiento = `1. Datos: F = ${fmt(d.F)} N, q1 = ${fmt(d.q1)} C, r = ${fmt(d.r)} m\n`;
+                procedimiento += `2. Se despeja |q2| = (F * r^2) / (k * |q1|)\n`;
+                procedimiento += `3. r^2 = ${fmt(r2)} m^2\n`;
+                procedimiento += `4. F * r^2 = ${fmt(d.F * r2)}\n`;
+                procedimiento += `5. k * |q1| = ${fmt(K * Math.abs(d.q1))}\n`;
+                procedimiento += `6. |q2| = ${fmt((d.F * r2) / (K * Math.abs(d.q1)))} C`;
+                resultado = `|q2| = ${fmt((d.F * r2) / (K * Math.abs(d.q1)))} C`;
+            } else if (d.target === 'r') {
+                valores = `F = ${fmt(d.F)} N, q1 = ${fmt(d.q1)} C, q2 = ${fmt(d.q2)} C`;
+                let num = K * Math.abs(d.q1 * d.q2);
+                procedimiento = `1. Datos: F = ${fmt(d.F)} N, q1 = ${fmt(d.q1)} C, q2 = ${fmt(d.q2)} C\n`;
+                procedimiento += `2. Se despeja r = sqrt( k * |q1 * q2| / F )\n`;
+                procedimiento += `3. k * |q1 * q2| = ${fmt(K)} * ${fmt(Math.abs(d.q1*d.q2))} = ${fmt(num)}\n`;
+                procedimiento += `4. División: ${fmt(num)} / ${fmt(d.F)} = ${fmt(num/d.F)}\n`;
+                procedimiento += `5. r = sqrt( ${fmt(num/d.F)} ) = ${fmt(Math.sqrt(num/d.F))} m`;
+                resultado = `r = ${fmt(Math.sqrt(num/d.F))} m`;
+            }
+        }
+        else if (modulo === 'e') {
+            const d = getEData();
+            titulo = "Campo Eléctrico de carga puntual";
+            formula = "E = k * |q| / r^2, con k = 8.9876 × 10^9 N·m^2/C^2";
+            if (d.target === 'E') {
+                valores = `q = ${fmt(d.q)} C, r = ${fmt(d.r)} m`;
+                let r2 = d.r * d.r;
+                procedimiento = `1. Datos: q = ${fmt(d.q)} C, distancia r = ${fmt(d.r)} m\n`;
+                procedimiento += `2. Fórmula: E = k * |q| / r^2\n`;
+                procedimiento += `3. r^2 = ${fmt(r2)} m^2\n`;
+                procedimiento += `4. |q| / r^2 = ${fmt(Math.abs(d.q))} / ${fmt(r2)} = ${fmt(Math.abs(d.q)/r2)} C/m^2\n`;
+                procedimiento += `5. E = ${fmt(K)} * ${fmt(Math.abs(d.q)/r2)} = ${fmt(K * Math.abs(d.q)/r2)} N/C`;
+                resultado = `E = ${fmt(K * Math.abs(d.q)/r2)} N/C`;
+            } else if (d.target === 'q') {
+                valores = `E = ${fmt(d.E)} N/C, r = ${fmt(d.r)} m`;
+                let r2 = d.r * d.r;
+                procedimiento = `1. Datos: E = ${fmt(d.E)} N/C, r = ${fmt(d.r)} m\n`;
+                procedimiento += `2. Se despeja |q| = (E * r^2) / k\n`;
+                procedimiento += `3. r^2 = ${fmt(r2)} m^2\n`;
+                procedimiento += `4. E * r^2 = ${fmt(d.E)} * ${fmt(r2)} = ${fmt(d.E * r2)}\n`;
+                procedimiento += `5. |q| = ${fmt(d.E * r2)} / ${fmt(K)} = ${fmt((d.E * r2)/K)} C`;
+                resultado = `|q| = ${fmt((d.E * r2)/K)} C`;
+            } else if (d.target === 'r') {
+                valores = `E = ${fmt(d.E)} N/C, q = ${fmt(d.q)} C`;
+                let num = K * Math.abs(d.q);
+                procedimiento = `1. Datos: E = ${fmt(d.E)} N/C, q = ${fmt(d.q)} C\n`;
+                procedimiento += `2. Se despeja r = sqrt( k * |q| / E )\n`;
+                procedimiento += `3. k * |q| = ${fmt(K)} * ${fmt(Math.abs(d.q))} = ${fmt(num)}\n`;
+                procedimiento += `4. División: ${fmt(num)} / ${fmt(d.E)} = ${fmt(num/d.E)}\n`;
+                procedimiento += `5. r = sqrt( ${fmt(num/d.E)} ) = ${fmt(Math.sqrt(num/d.E))} m`;
+                resultado = `r = ${fmt(Math.sqrt(num/d.E))} m`;
+            }
+        }
+        else if (modulo === 'dist') {
+            const d = getDistData();
+            if (d.type === 'lineal') {
+                titulo = "Distribución lineal de carga";
+                formula = "λ = Q / L";
+                if (d.calc === 'lambda') {
+                    valores = `Q = ${fmt(d.Q)} C, L = ${fmt(d.L)} m`;
+                    procedimiento = `1. Se tiene una carga total Q = ${fmt(d.Q)} C distribuida uniformemente a lo largo de una longitud L = ${fmt(d.L)} m.\n`;
+                    procedimiento += `2. La densidad lineal de carga se calcula como λ = Q / L.\n`;
+                    procedimiento += `3. λ = ${fmt(d.Q)} / ${fmt(d.L)} = ${fmt(d.Q/d.L)} C/m.`;
+                    resultado = `λ = ${fmt(d.Q/d.L)} C/m`;
+                } else if (d.calc === 'Q') {
+                    valores = `λ = ${fmt(d.lambda)} C/m, L = ${fmt(d.L)} m`;
+                    procedimiento = `1. Se conoce la densidad lineal λ = ${fmt(d.lambda)} C/m y la longitud L = ${fmt(d.L)} m.\n`;
+                    procedimiento += `2. La carga total se obtiene como Q = λ * L.\n`;
+                    procedimiento += `3. Q = ${fmt(d.lambda)} * ${fmt(d.L)} = ${fmt(d.lambda * d.L)} C.`;
+                    resultado = `Q = ${fmt(d.lambda * d.L)} C`;
+                } else if (d.calc === 'L') {
+                    valores = `λ = ${fmt(d.lambda)} C/m, Q = ${fmt(d.Q)} C`;
+                    procedimiento = `1. Se tiene densidad lineal λ = ${fmt(d.lambda)} C/m y carga total Q = ${fmt(d.Q)} C.\n`;
+                    procedimiento += `2. La longitud se calcula como L = Q / λ.\n`;
+                    procedimiento += `3. L = ${fmt(d.Q)} / ${fmt(d.lambda)} = ${fmt(d.Q/d.lambda)} m.`;
+                    resultado = `L = ${fmt(d.Q/d.lambda)} m`;
+                }
+            } else if (d.type === 'superficial') {
+                titulo = "Distribución superficial de carga";
+                formula = "σ = Q / A";
+                if (d.calc === 'sigma') {
+                    valores = `Q = ${fmt(d.Q)} C, A = ${fmt(d.A)} m²`;
+                    procedimiento = `1. Carga total Q = ${fmt(d.Q)} C distribuida en un área A = ${fmt(d.A)} m².\n`;
+                    procedimiento += `2. Densidad superficial: σ = Q / A = ${fmt(d.Q)} / ${fmt(d.A)} = ${fmt(d.Q/d.A)} C/m².`;
+                    resultado = `σ = ${fmt(d.Q/d.A)} C/m²`;
+                } else if (d.calc === 'Q') {
+                    valores = `σ = ${fmt(d.sigma)} C/m², A = ${fmt(d.A)} m²`;
+                    procedimiento = `1. Densidad superficial σ = ${fmt(d.sigma)} C/m², área A = ${fmt(d.A)} m².\n`;
+                    procedimiento += `2. Carga total: Q = σ * A = ${fmt(d.sigma)} * ${fmt(d.A)} = ${fmt(d.sigma * d.A)} C.`;
+                    resultado = `Q = ${fmt(d.sigma * d.A)} C`;
+                } else if (d.calc === 'A') {
+                    valores = `σ = ${fmt(d.sigma)} C/m², Q = ${fmt(d.Q)} C`;
+                    procedimiento = `1. Densidad σ = ${fmt(d.sigma)} C/m², carga Q = ${fmt(d.Q)} C.\n`;
+                    procedimiento += `2. Área: A = Q / σ = ${fmt(d.Q)} / ${fmt(d.sigma)} = ${fmt(d.Q/d.sigma)} m².`;
+                    resultado = `A = ${fmt(d.Q/d.sigma)} m²`;
+                }
+            } else if (d.type === 'volumetrica') {
+                titulo = "Distribución volumétrica de carga";
+                formula = "ρ = Q / V";
+                if (d.calc === 'rho') {
+                    valores = `Q = ${fmt(d.Q)} C, V = ${fmt(d.V)} m³`;
+                    procedimiento = `1. Carga Q = ${fmt(d.Q)} C en volumen V = ${fmt(d.V)} m³.\n`;
+                    procedimiento += `2. Densidad volumétrica: ρ = Q / V = ${fmt(d.Q)} / ${fmt(d.V)} = ${fmt(d.Q/d.V)} C/m³.`;
+                    resultado = `ρ = ${fmt(d.Q/d.V)} C/m³`;
+                } else if (d.calc === 'Q') {
+                    valores = `ρ = ${fmt(d.rho)} C/m³, V = ${fmt(d.V)} m³`;
+                    procedimiento = `1. Densidad ρ = ${fmt(d.rho)} C/m³, volumen V = ${fmt(d.V)} m³.\n`;
+                    procedimiento += `2. Carga total: Q = ρ * V = ${fmt(d.rho)} * ${fmt(d.V)} = ${fmt(d.rho * d.V)} C.`;
+                    resultado = `Q = ${fmt(d.rho * d.V)} C`;
+                } else if (d.calc === 'V') {
+                    valores = `ρ = ${fmt(d.rho)} C/m³, Q = ${fmt(d.Q)} C`;
+                    procedimiento = `1. Densidad ρ = ${fmt(d.rho)} C/m³, carga Q = ${fmt(d.Q)} C.\n`;
+                    procedimiento += `2. Volumen: V = Q / ρ = ${fmt(d.Q)} / ${fmt(d.rho)} = ${fmt(d.Q/d.rho)} m³.`;
+                    resultado = `V = ${fmt(d.Q/d.rho)} m³`;
+                }
+            }
+        }
+        else if (modulo === 'flux') {
+            const d = getFluxData();
+            titulo = "Flujo Eléctrico a través de una superficie plana";
+            formula = "Φ = E * A * cos(θ)";
+            if (d.target === 'Phi') {
+                valores = `E = ${fmt(d.E)} N/C, A = ${fmt(d.A)} m², θ = ${fmt(d.theta)}°`;
+                let cosVal = Math.cos(d.theta * Math.PI/180);
+                procedimiento = `1. Datos: campo eléctrico E = ${fmt(d.E)} N/C, área A = ${fmt(d.A)} m², ángulo entre el campo y la normal a la superficie θ = ${fmt(d.theta)}°.\n`;
+                procedimiento += `2. Se calcula cos(θ) = cos(${fmt(d.theta)}°) = ${cosVal.toFixed(6)}.\n`;
+                procedimiento += `3. Flujo eléctrico: Φ = E * A * cosθ = ${fmt(d.E)} * ${fmt(d.A)} * ${cosVal.toFixed(6)} = ${fmt(d.E * d.A * cosVal)} N·m²/C.`;
+                resultado = `Φ = ${fmt(d.E * d.A * cosVal)} N·m²/C`;
+            } else if (d.target === 'E') {
+                valores = `Φ = ${fmt(d.Phi)} N·m²/C, A = ${fmt(d.A)} m², θ = ${fmt(d.theta)}°`;
+                let cosVal = Math.cos(d.theta * Math.PI/180);
+                procedimiento = `1. Datos: flujo Φ = ${fmt(d.Phi)} N·m²/C, área A = ${fmt(d.A)} m², ángulo θ = ${fmt(d.theta)}°.\n`;
+                procedimiento += `2. cosθ = ${cosVal.toFixed(6)}.\n`;
+                procedimiento += `3. Se despeja E = Φ / (A * cosθ) = ${fmt(d.Phi)} / (${fmt(d.A)} * ${cosVal.toFixed(6)}) = ${fmt(d.Phi/(d.A*cosVal))} N/C.`;
+                resultado = `E = ${fmt(d.Phi/(d.A*cosVal))} N/C`;
+            } else if (d.target === 'A') {
+                valores = `Φ = ${fmt(d.Phi)} N·m²/C, E = ${fmt(d.E)} N/C, θ = ${fmt(d.theta)}°`;
+                let cosVal = Math.cos(d.theta * Math.PI/180);
+                procedimiento = `1. Datos: Φ = ${fmt(d.Phi)} N·m²/C, E = ${fmt(d.E)} N/C, θ = ${fmt(d.theta)}°.\n`;
+                procedimiento += `2. cosθ = ${cosVal.toFixed(6)}.\n`;
+                procedimiento += `3. Área: A = Φ / (E * cosθ) = ${fmt(d.Phi)} / (${fmt(d.E)} * ${cosVal.toFixed(6)}) = ${fmt(d.Phi/(d.E*cosVal))} m².`;
+                resultado = `A = ${fmt(d.Phi/(d.E*cosVal))} m²`;
+            } else if (d.target === 'theta') {
+                valores = `Φ = ${fmt(d.Phi)} N·m²/C, E = ${fmt(d.E)} N/C, A = ${fmt(d.A)} m²`;
+                let cosCalc = d.Phi / (d.E * d.A);
+                let angulo = Math.acos(Math.min(1, Math.max(-1, cosCalc))) * 180/Math.PI;
+                procedimiento = `1. Datos: Φ = ${fmt(d.Phi)} N·m²/C, E = ${fmt(d.E)} N/C, A = ${fmt(d.A)} m².\n`;
+                procedimiento += `2. cosθ = Φ / (E * A) = ${fmt(d.Phi)} / (${fmt(d.E)} * ${fmt(d.A)}) = ${cosCalc.toFixed(6)}.\n`;
+                procedimiento += `3. θ = arccos(${cosCalc.toFixed(6)}) = ${fmt(angulo)}°.`;
+                resultado = `θ = ${fmt(angulo)}°`;
+            }
+        }
+        else if (modulo === 'gauss') {
+            const d = getGaussData();
+            const eps = EPS0;
+            if (d.sym === 'sphere') {
+                titulo = "Ley de Gauss - Simetría esférica";
+                formula = "∮ E·dA = Q_enc / ε₀, con ε₀ = 8.854187817×10⁻¹² F/m";
+                if (d.target === 'E') {
+                    valores = `Radio r = ${fmt(d.r)} m, carga encerrada Q_enc = ${fmt(d.val)} C`;
+                    let area = 4 * Math.PI * d.r * d.r;
+                    procedimiento = `1. Se elige una superficie gaussiana esférica de radio r = ${fmt(d.r)} m concéntrica con la distribución.\n`;
+                    procedimiento += `2. El flujo eléctrico a través de la superficie es Φ = E * (4π r^2) = E * ${fmt(area)} m².\n`;
+                    procedimiento += `3. La carga encerrada es Q_enc = ${fmt(d.val)} C.\n`;
+                    procedimiento += `4. Ley de Gauss: E * 4π r^2 = Q_enc / ε₀.\n`;
+                    procedimiento += `5. Despejando E = Q_enc / (4π ε₀ r^2) = ${fmt(d.val)} / (4π * ${fmt(eps)} * ${fmt(d.r*d.r)}) = ${fmt(d.val/(4*Math.PI*eps*d.r*d.r))} N/C.`;
+                    resultado = `E = ${fmt(d.val/(4*Math.PI*eps*d.r*d.r))} N/C`;
+                } else {
+                    valores = `Radio r = ${fmt(d.r)} m, campo eléctrico E = ${fmt(d.val)} N/C`;
+                    let area = 4 * Math.PI * d.r * d.r;
+                    procedimiento = `1. Superficie gaussiana esférica de radio r = ${fmt(d.r)} m.\n`;
+                    procedimiento += `2. El flujo es Φ = E * 4π r^2 = ${fmt(d.val)} * ${fmt(area)} = ${fmt(d.val * area)} N·m²/C.\n`;
+                    procedimiento += `3. Por Ley de Gauss: Q_enc = ε₀ * Φ = ${fmt(eps)} * ${fmt(d.val * area)} = ${fmt(eps * d.val * area)} C.`;
+                    resultado = `Q_enc = ${fmt(eps * d.val * area)} C`;
+                }
+            } else if (d.sym === 'plane') {
+                titulo = "Ley de Gauss - Plano infinito";
+                formula = "E = σ / (2 ε₀)";
+                if (d.target === 'E') {
+                    valores = `Densidad superficial σ = ${fmt(d.val)} C/m²`;
+                    procedimiento = `1. Plano infinito con densidad de carga σ = ${fmt(d.val)} C/m².\n`;
+                    procedimiento += `2. Aplicando Ley de Gauss con una superficie cilíndrica que atraviesa el plano, se obtiene E = σ / (2 ε₀).\n`;
+                    procedimiento += `3. E = ${fmt(d.val)} / (2 * ${fmt(eps)}) = ${fmt(d.val/(2*eps))} N/C.`;
+                    resultado = `E = ${fmt(d.val/(2*eps))} N/C`;
+                } else {
+                    valores = `Campo eléctrico E = ${fmt(d.val)} N/C`;
+                    procedimiento = `1. Se conoce el campo eléctrico cerca del plano: E = ${fmt(d.val)} N/C.\n`;
+                    procedimiento += `2. De la fórmula E = σ / (2 ε₀) se despeja σ = 2 ε₀ E.\n`;
+                    procedimiento += `3. σ = 2 * ${fmt(eps)} * ${fmt(d.val)} = ${fmt(2*eps*d.val)} C/m².`;
+                    resultado = `σ = ${fmt(2*eps*d.val)} C/m²`;
+                }
+            } else if (d.sym === 'cylinder') {
+                titulo = "Ley de Gauss - Cilindro infinito";
+                formula = "E = λ / (2π ε₀ r)";
+                if (d.target === 'E') {
+                    valores = `Densidad lineal λ = ${fmt(d.val)} C/m, distancia radial r = ${fmt(d.r)} m`;
+                    procedimiento = `1. Cilindro infinito con densidad lineal λ = ${fmt(d.val)} C/m.\n`;
+                    procedimiento += `2. Se toma una superficie gaussiana cilíndrica coaxial de radio r = ${fmt(d.r)} m y longitud L.\n`;
+                    procedimiento += `3. El flujo es E * (2π r L). La carga encerrada es λ L.\n`;
+                    procedimiento += `4. Ley de Gauss: E * 2π r L = λ L / ε₀ → E = λ / (2π ε₀ r).\n`;
+                    procedimiento += `5. E = ${fmt(d.val)} / (2π * ${fmt(eps)} * ${fmt(d.r)}) = ${fmt(d.val/(2*Math.PI*eps*d.r))} N/C.`;
+                    resultado = `E = ${fmt(d.val/(2*Math.PI*eps*d.r))} N/C`;
+                } else {
+                    valores = `Campo E = ${fmt(d.val)} N/C a una distancia radial r = ${fmt(d.r)} m`;
+                    procedimiento = `1. Campo conocido E = ${fmt(d.val)} N/C a r = ${fmt(d.r)} m.\n`;
+                    procedimiento += `2. De la expresión E = λ / (2π ε₀ r) se despeja λ = 2π ε₀ r E.\n`;
+                    procedimiento += `3. λ = 2π * ${fmt(eps)} * ${fmt(d.r)} * ${fmt(d.val)} = ${fmt(2*Math.PI*eps*d.r*d.val)} C/m.`;
+                    resultado = `λ = ${fmt(2*Math.PI*eps*d.r*d.val)} C/m`;
+                }
+            }
+        }
+
+        const doc = new jsPDF();
+        doc.setFont("helvetica");
+        doc.setFontSize(18);
+        doc.text(`ElectroTools - ${titulo}`, 20, 20);
+        doc.setFontSize(11);
+        doc.text(`Fecha: ${new Date().toLocaleString()}`, 20, 30);
+        doc.text("Fórmula(s) utilizada(s):", 20, 45);
+        doc.setFont("courier");
+        doc.text(formula, 25, 55);
+        doc.setFont("helvetica");
+        doc.text("Datos de entrada:", 20, 70);
+        doc.text(valores, 25, 80);
+        doc.text("Procedimiento detallado paso a paso:", 20, 100);
+        const lines = procedimiento.split('\n');
+        let y = 110;
+        for (let line of lines) {
+            if (y > 270) { doc.addPage(); y = 20; }
+            doc.text(line, 25, y);
+            y += 7;
+        }
+        doc.text("Resultado final:", 20, y+6);
+        doc.text(resultado, 25, y+16);
+        doc.save(`ElectroTools_${titulo.replace(/\s/g, '_')}.pdf`);
+    }
+
+    document.querySelectorAll('.pdf-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const module = btn.getAttribute('data-module');
+            generarPDF(module);
+        });
+    });
+
+    // Tema oscuro/claro
+    const themeBtn = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('electroTheme');
+    if (savedTheme === 'light') { document.body.classList.add('light'); themeBtn.innerHTML = '<i class="fas fa-sun"></i> Modo claro'; }
+    else { themeBtn.innerHTML = '<i class="fas fa-moon"></i> Modo oscuro'; }
+    themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light');
+        const isLight = document.body.classList.contains('light');
+        localStorage.setItem('electroTheme', isLight ? 'light' : 'dark');
+        themeBtn.innerHTML = isLight ? '<i class="fas fa-sun"></i> Modo claro' : '<i class="fas fa-moon"></i> Modo oscuro';
+    });
+</script>
+</body>
+</html>
